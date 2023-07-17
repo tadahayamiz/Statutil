@@ -1,0 +1,13 @@
+graft tests
+graft docs
+
+include LICENSE.txt
+include README
+include samplecode.ipynb
+
+prune .git
+
+global-exclude *.pyc
+global-exclude __pycache__
+
+prune __legacy
