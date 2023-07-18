@@ -131,10 +131,10 @@ class BootstrapCI:
 
         """
         if symmetric:
-            qq = t(df=self.n).ppf(1 - alpha/2)
+            qq = t(df=self.n - 1).ppf(1 - alpha/2)
             return np.array([self.theta - self.se * qq, self.theta + self.se * qq])
         else:
-            qq = t(df=self.n).ppf(1 - alpha)
+            qq = t(df=self.n - 1).ppf(1 - alpha)
             return self.theta - self.se * qq
 
     
