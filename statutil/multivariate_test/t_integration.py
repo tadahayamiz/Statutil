@@ -140,6 +140,7 @@ class Calc():
         """
         pval,diff = self._calc_indivisual_p(group)
         value = self._integrate(pval,diff,sign)
+        # note len(pval) = K (treatment condition)
         return self._calc_integrated_p(value,len(pval)),diff
 
 

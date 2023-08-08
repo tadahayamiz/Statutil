@@ -1,24 +1,34 @@
-# statutil  
-in-house utilities for statistics.  
+## Statutil
+In-house utilities for statistics.  
+Under construction
 
-# Dependency  
-* python 3.6 # indicate python versions  
-* requirements: numpy, pandas, scipy, tqdm # indicate required packages  
-    
-# Usage  
-see samplecode.ipynb  
-   
-# Licence  
-This software is released under the MIT License.  
+## Install
+- ``` pip install git+{URL OF THIS GITHUB REPOSITORY} ```  
+- In the development stage, it may be helpful to add ``` --force-reinstall ``` option  
 
-# Authors  
-Tadahaya MIZUNO
+## Organization
+------------  
 
-# References  
-This package is inspired from the following brilliant databases and studies:  
-* reference  
-  
-# Bug Report  
-If you would like to report any bugs about this package, don't hesitate to create an issue on github here, or email me:  
-* tadahaya@gmail.com  
-* tadahaya@mol.f.u-tokyo.ac.jp  
+    ├── LICENSE  
+    ├── README.md           <- The top-level README for developers using this project  
+    │
+    ├── requirements.txt    <- The requirements file for reproducing the analysis environment, e.g.
+    │                         generated with `pip freeze > requirements.txt`
+    │
+    ├── setup.py            <- makes project pip installable (pip install -e .) so src can be imported
+    │
+    └── statutil              <- Source code for use in this project.
+        ├── __init__.py     <- Makes src a Python module
+        │
+        └── core.py         <- main src for this module
+
+------------
+
+## Authors
+[Tadahaya Mizuno](https://github.com/tadahayamiz)  
+
+## References
+[cookiecutter](https://github.com/cookiecutter/cookiecutter)  
+
+## Contact
+- tadahaya[at]gmail.com  
