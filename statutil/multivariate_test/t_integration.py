@@ -167,11 +167,18 @@ class Calc():
         res_p = []
         res_d = []
         res_t = []
-        for v in group.values():
-            pval, diff, stat = self.calc_single(v, sign)
-            res_p.append(pval)
-            res_d.append(np.mean(diff))
-            res_t.append(np.mean(stat * np.sign(diff)))
+        if sign:
+            for v in group.values():
+                pval, diff, stat = self.calc_single(v, sign)
+                res_p.append(pval)
+                res_d.append(np.mean(diff))
+                res_t.append(np.mean(stat * np.sign(diff)))
+        else:
+            for v in group.values():
+                pval, diff, stat = self.calc_single(v, sign)
+                res_p.append(pval)
+                res_d.append(np.mean(diff))
+                res_t.append(np.mean(stat))
         res = pd.DataFrame(
             {"p_val":res_p,"mean_diff":res_d, "mean_t":res_t},index=list(group.keys())
             )
@@ -232,10 +239,10 @@ class Calc():
             whether sign is considered in integration or not
 
         """
-        logs = np.log(pval)
+        logs = -np.log(pval)
         if sign:
-            logs = logs*np.sign(diff)
-        integrated = np.sum(logs)*(-1)
+            logs = np.abs(logs*np.sign(diff))
+        integrated = np.sum(logs)
         # divided by L to correct dependence between controls
         return integrated/self.L # take the average. mean false discovery rate may be better? alpha(L + 1)/2L
 
