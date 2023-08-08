@@ -51,9 +51,12 @@ def calc(data,treatment:str="",control:str="",group:list=[],sign:bool=True,metho
 
 class Calc():
     def __init__(self):
-        self.raw_data = pd.DataFrame()
+        self.data = None
         self.idx = []
-        self.diff = dict()
+        self.col = []
+        self.diff = None
+        self.result = None
+        self.present_member = []
 
 
     def set_data(self,data,treatment:str="",control:str=""):
@@ -72,27 +75,15 @@ class Calc():
             indicate the keyword for the control columns
 
         """
-        col = list(data.columns)
-        idx = list(data.index)
-        self.__treatment_col = [v for v in col if treatment in v]
-        self.__control_col = [v for v in col if control in v]
-        tre = data[self.__treatment_col].T
-        con = data[self.__control_col].T
-        self.idx = []
-        for i in idx:
-            v_con = con[i].values
-            v_tre = tre[i].values
-            v_con = v_con[~np.isnan(v_con)]
-            v_tre = v_tre[~np.isnan(v_tre)]
-            if np.min((v_tre.shape[0],v_con.shape[0])) >= 3:
-                self.idx.append(i)
-        self.raw_data = data.loc[self.idx,:]
-        self.L = len(self.__control_col)
-        if self.L==0:
-            raise ValueError("!! No control columns: check control argument and the column names !!")
-        if len(self.__treatment_col)==0:
-            raise ValueError("!! No treaatment columns: check treatment argument and the column names !!")
-        self.result = pd.DataFrame()
+        self.col = list(data.columns)
+        self.idx = [v.lower() for v in list(data.index)]
+        self.data = data.values
+        self.__tre_col = [i for i, v in enumerate(self.col) if treatment in v]
+        self.__con_col = [i for i, v in enumerate(self.col) if control in v]
+        self.K = len(self.__tre_col)
+        self.L = len(self.__con_col)
+        self.N = len(self.idx)
+        self.result = None
 
 
     def calc(self,group:list=[],sign:bool=True,method:str="fdr_bh"):
@@ -102,7 +93,7 @@ class Calc():
         Paramters
         ---------
         group: list or dict
-            indicate the members of a focusing group
+            indicate the members of a focusing group, whose length is greater than 2
             dictionary of groups can be acceptable
 
         sign: bool
@@ -113,19 +104,20 @@ class Calc():
             based on statsmodels.stats.multitest.multipletests
 
         """
+        assert len(group) > 2
         if len(self.idx)==0:
             raise ValueError("!! Set a dataframe !!")
         if len(self.diff)==0:
             self._calc_diff()
         if type(group)==list:
-            return self.calc_single(group,sign)
+            return self.calc_single(group, sign)
         elif type(group)==dict:
-            return self.calc_multi(group,sign,method)
+            return self.calc_multi(group, sign, method)
         else:
             raise TypeError("!! group should be a list or a dict !!")
 
 
-    def calc_single(self,group:list=[],sign:bool=True):
+    def calc_single(self, group:list=[], sign:bool=True):
         """
         calculate the importance of the given group between the two conditions
         
@@ -138,16 +130,21 @@ class Calc():
             whether sign is considered in integration or not
         
         """
-        pval, diff, tstat, pre = self._calc_indivisual_p(group)
-        each = pd.DataFrame(
-            {"p value":pval, "difference":diff, "t statistics":tstat}, index=pre
-            )
+        pval, diff, stat = self._calc_indivisual_p(group)
         value = self._integrate(pval, diff, sign)
-        # note len(pval) = K (treatment condition)
-        return self._calc_integrated_p(value,len(pval)), each
+        tre = np.tile(self.__tre_col, (self.L, 1)).T.flatten()
+        con = np.tile(self.__con_col, self.K)
+        each = pd.DataFrame({
+            "p_val":pval.flatten(), # K x L -> val[0], val[1], ..., val[k]
+            "diff":diff.flatten(),
+            "t_stat":stat.flatten(),
+            "treatment":tre,
+            "control":con,
+        })
+        return self._calc_integrated_p(value), each
 
 
-    def calc_multi(self,group:dict,sign:bool=True,method:str="fdr_bh"):
+    def calc_multi(self, group:dict, sign:bool=True, method:str="fdr_bh"):
         """
         calculate the importance of the given group between the two conditions
         
@@ -167,35 +164,31 @@ class Calc():
         """
         res_p = []
         res_d = []
+        res_t = []
         for v in group.values():
-            pval, diff, tstat, pre = self.calc_single(v,sign)
+            pval, diff, stat = self.calc_single(v, sign)
             res_p.append(pval)
             res_d.append(np.mean(diff))
-        res = pd.DataFrame({"p value":res_p,"mean difference":res_d},index=list(group.keys()))
+            res_t.append(np.mean(stat * np.sign(diff)))
+        res = pd.DataFrame(
+            {"p_val":res_p,"mean_diff":res_d, "mean_t":res_t},index=list(group.keys())
+            )
         res_posi = res.dropna()
-        res_q = multitest.multipletests(res_posi["p value"].values,method=method)[1]
-        res_posi["adjusted p value"] = res_q
-        res_posi = res_posi.sort_values("p value")
-        return res_posi[["p value","adjusted p value","mean difference"]]
+        res_q = multitest.multipletests(res_posi["p_val"].values,method=method)[1]
+        res.loc[res_posi.index, "adjuste_p_val"] = res_q
+        res = res.sort_values("p_val")
+        return res[["p_val", "adjusted_p_val", "mean_diff", "mean_stat"]]
 
 
     def _calc_diff(self):
         """ calculate the differences between the treatment and the control """
-        tre = self.raw_data[self.__treatment_col].values
-        res = []
-        for c in self.__control_col:
-            temp = self.raw_data[c].values
-            res.append(tre - np.c_[temp])
-        res = np.concatenate(res,axis=1)
-        self.diff = dict(zip(self.idx,res))
-        for k,v in self.diff.items():
-            temp = self.diff[k]
-            temp = temp[~np.isnan(temp)]
-            self.diff[k] = temp
-        self.diff["WHOLE"] = np.array(list(chain.from_iterable(self.diff.values())))
+        # prepare subtract tensor: index x treatment x control
+        self.diff = np.zeros((self.N, self.K, self.L))
+        for i, c in enumerate(self.__con_col):
+            self.diff[:, :, i] = self.data[:, self.__tre_col] - self.data[:, c].reshape(-1, 1)
 
 
-    def _calc_indivisual_p(self,group:list=[]):
+    def _calc_indivisual_p(self, group:list=[]):
         """
         calculate the p values of a focusing group
 
@@ -205,47 +198,47 @@ class Calc():
             indicate the members of a focusing group
         
         """
-        present = [v for v in group if v in self.idx]
-        if len(present)==0:
-            return np.array([]),np.array([])
+        self.present_member = [v for v in group if v in self.idx]
+        if len(self.present_member)==0:
+            return np.array([]), np.array([]), np.array([])
         else:
-            whole = self.diff["WHOLE"]
-            mean_whole = np.mean(whole)
-            pval = []
-            diff = []
-            tstat = []
-            for v in present:
-                temp = self.diff[v]
-                t, p = stats.ttest_ind(temp,whole,equal_var=False)
-                pval.append(p)
-                tstat.append(t)
-                diff.append(np.mean(temp) - mean_whole)
-            return np.array(pval), np.array(diff), np.array(tstat), present
+            present_idx = [self.idx.index(v) for v in self.present_member]
+            pval = np.zeros((self.K, self.L))
+            diff = np.zeros((self.K, self.L))
+            stat = np.zeros((self.K, self.L))
+            for k in range(self.K):
+                for l in range(self.L):
+                    whole = self.diff[:, k, l]
+                    focused = whole[present_idx]
+                    t, p = stats.ttest_ind(focused, whole, equal_var=False) # Welch
+                    stat[k, l] = t
+                    pval[k, l] = p
+                    diff[k, l] = np.mean(focused) - np.mean(whole)
+            return pval, diff, stat
 
 
-    def _integrate(self,pval:np.array([]),diff:np.array([]),sign:bool=True):
+    def _integrate(self, pval:np.array([]), diff:np.array([]), sign:bool=True):
         """
         integrate p values with Fisher's method
 
         Parameters
         ----------
-        pval,diff: list or array
+        pval, diff: list or array
             indicate the p values and the difference of the focused group between two conditions
         
         sign: bool
             whether sign is considered in integration or not
 
         """
-        if (len(pval)!=len(diff)) and (sign==True):
-            raise ValueError("!! length of p values and differences is different. Or sign should be False !!")
         logs = np.log(pval)
         if sign:
             logs = logs*np.sign(diff)
         integrated = np.sum(logs)*(-1)
+        # divided by L to correct dependence between controls
         return integrated/self.L # take the average. mean false discovery rate may be better? alpha(L + 1)/2L
 
 
-    def _calc_integrated_p(self,value:float,K:int):
+    def _calc_integrated_p(self, value:float):
         """
         calculate p value based on Gamma distribution with df=K and scale=1
 
@@ -254,11 +247,8 @@ class Calc():
         value: float
             integrated negative log sum
         
-        K: int
-            degree of freedom for the Gamma distribution
-
         """
-        return stats.gamma.sf(value,K,scale=1)
+        return stats.gamma.sf(value, self.K, scale=1)
 
 
     def plot(self,res,focus=5,fileout="",dpi=100,thresh=0.05,xlabel="-logP",ylabel="",title="",
@@ -322,15 +312,14 @@ class Calc():
             indicate the members of a focusing group
             
         """
-        pval, diff, tstat, pre = self._calc_indivisual_p(group)
-        integrated = self._integrate(pval,diff,sign)
-        K = len(pval)
-        p = self._calc_integrated_p(integrated,K)
-        thresh = stats.gamma(a=K,scale=1).isf(alpha)
+        pval, diff, stat = self._calc_indivisual_p(group)
+        integrated = self._integrate(pval, diff, sign)
+        p = self._calc_integrated_p(integrated)
+        thresh = stats.gamma(a=self.K, scale=1).isf(alpha)
         xmax = np.max((thresh*1.1,integrated*1.1))
         x = np.linspace(0,xmax)
         y = x[x > integrated]
-        gamma_pdf = stats.gamma(a=K,scale=1).sf
+        gamma_pdf = stats.gamma(a=self.K, scale=1).sf
         if len(figsize) > 0:
             fig = plt.figure(figsize=figsize)
         else:
@@ -343,14 +332,14 @@ class Calc():
             ax.set_ylabel(ylabel)
         if len(title) > 0:
             ax.set_title(title)
-        ax.plot(x,gamma_pdf(x),lw=2,c='grey')
-        ax.plot(y,gamma_pdf(y),lw=2,c=color)
-        ax.axvline(integrated,ymin=0,ymax=1,color=color,lw=2,linestyle="--",label="integrated (p={:.2})".format(p))
-        ax.axvline(thresh,ymin=0,ymax=1,color="lightgrey",lw=2,linestyle="--",label="ref (p={:.2})".format(1 - alpha))
-        ax.fill_between(x=y,y1=gamma_pdf(y),y2=-0.02,color=color,alpha=0.5)
+        ax.plot(x, gamma_pdf(x),lw=2,c='grey')
+        ax.plot(y, gamma_pdf(y),lw=2,c=color)
+        ax.axvline(integrated, ymin=0, ymax=1, color=color, lw=2, linestyle="--", label="integrated (p={:.2})".format(p))
+        ax.axvline(thresh, ymin=0, ymax=1, color="lightgrey", lw=2, linestyle="--", label="ref (p={:.2})".format(1 - alpha))
+        ax.fill_between(x=y, y1=gamma_pdf(y), y2=-0.02, color=color, alpha=0.5)
         plt.legend(loc="best")
         if len(fileout) > 0:
-            plt.savefig(fileout,bbox_inches="tight",dpi=dpi)
+            plt.savefig(fileout, bbox_inches="tight", dpi=dpi)
         plt.tight_layout()
         plt.show()
 
