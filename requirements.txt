@@ -1,5 +1,5 @@
-numpy
-pandas
-scipy
-tqdm
-pyyaml
+numpy == 1.25.2
+pandas == 2.0.3
+scipy == 1.11.1
+tqdm == 4.65.0
+pyyaml == 6.0.1
