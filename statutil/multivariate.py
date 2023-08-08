@@ -115,7 +115,7 @@ def ting():
         })
     # export
     if len(args.outdir) > 0:
-        outdir = args.outdir + SEP + "result"
+        outdir = args.outdir
     else:
         outdir = os.path.dirname(args.data) + SEP + "result"
     if not os.path.exists(outdir):
