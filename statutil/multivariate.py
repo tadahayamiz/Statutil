@@ -106,10 +106,10 @@ def ting():
     # main
     dat = Calc()
     dat.set_data(df, args.treatment, args.control)
-    p, diff = dat.calc(group, args.sign, args.correction)
+    int_p, each = dat.calc(group, args.sign, args.correction)
     res = pd.DataFrame({
         "integrated p value":[p],
-        "mean difference":np.mean(diff),
+        "mean difference":each["difference"].mean(),
         "analyzed member":["///".join([v for v in group if v in df.index])],
         "K":[len(tre)], # num of treatment conditions
         "L":[len(con)], # num of control conditions
@@ -131,6 +131,7 @@ def ting():
         "scipy":[scipy.__version__],
         })
     res.to_csv(outdir + SEP + "result.txt", sep=args.extension)
+    each.to_csv(outdir + SEP + "result_individual.txt", sep=args.extension)
     configs.to_csv(outdir + SEP + "config.txt", sep=args.extension)
     # plot
     out_plot = outdir + SEP + "/fig_gamma.tif"

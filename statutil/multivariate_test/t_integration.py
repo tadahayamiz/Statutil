@@ -138,10 +138,13 @@ class Calc():
             whether sign is considered in integration or not
         
         """
-        pval,diff = self._calc_indivisual_p(group)
+        pval, diff, tstat = self._calc_indivisual_p(group)
+        each = pd.DataFrame(
+            {"p value":pval, "difference":diff, "t statistics":tstat}, index=group
+            )
         value = self._integrate(pval,diff,sign)
         # note len(pval) = K (treatment condition)
-        return self._calc_integrated_p(value,len(pval)),diff
+        return self._calc_integrated_p(value,len(pval)), each
 
 
     def calc_multi(self,group:dict,sign:bool=True,method:str="fdr_bh"):
@@ -165,7 +168,7 @@ class Calc():
         res_p = []
         res_d = []
         for v in group.values():
-            pval,diff = self.calc_single(v,sign)
+            pval, diff, tstat = self.calc_single(v,sign)
             res_p.append(pval)
             res_d.append(np.mean(diff))
         res = pd.DataFrame({"p value":res_p,"mean difference":res_d},index=list(group.keys()))
@@ -210,12 +213,14 @@ class Calc():
             mean_whole = np.mean(whole)
             pval = []
             diff = []
+            tstat = []
             for v in present:
                 temp = self.diff[v]
-                t,p = stats.ttest_ind(temp,whole,equal_var=False)
+                t, p = stats.ttest_ind(temp,whole,equal_var=False)
                 pval.append(p)
+                tstat.append(t)
                 diff.append(np.mean(temp) - mean_whole)
-            return np.array(pval),np.array(diff)
+            return np.array(pval), np.array(diff), np.array(tstat)
 
 
     def _integrate(self,pval:np.array([]),diff:np.array([]),sign:bool=True):
