@@ -341,7 +341,7 @@ class Calc():
         ax.plot(x,gamma_pdf(x),lw=2,c='grey')
         ax.plot(y,gamma_pdf(y),lw=2,c=color)
         ax.axvline(integrated,ymin=0,ymax=1,color=color,lw=2,linestyle="--",label="integrated (p={:.2})".format(p))
-        ax.axvline(thresh,ymin=0,ymax=1,color="lightgrey",lw=2,linestyle="--",label="ref (p={})".format(1 - alpha))
+        ax.axvline(thresh,ymin=0,ymax=1,color="lightgrey",lw=2,linestyle="--",label="ref (p={:.2})".format(1 - alpha))
         ax.fill_between(x=y,y1=gamma_pdf(y),y2=-0.02,color=color,alpha=0.5)
         plt.legend(loc="best")
         if len(fileout) > 0:
