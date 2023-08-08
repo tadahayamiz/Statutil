@@ -138,11 +138,11 @@ class Calc():
             whether sign is considered in integration or not
         
         """
-        pval, diff, tstat = self._calc_indivisual_p(group)
+        pval, diff, tstat, pre = self._calc_indivisual_p(group)
         each = pd.DataFrame(
-            {"p value":pval, "difference":diff, "t statistics":tstat}, index=group
+            {"p value":pval, "difference":diff, "t statistics":tstat}, index=pre
             )
-        value = self._integrate(pval,diff,sign)
+        value = self._integrate(pval, diff, sign)
         # note len(pval) = K (treatment condition)
         return self._calc_integrated_p(value,len(pval)), each
 
@@ -168,7 +168,7 @@ class Calc():
         res_p = []
         res_d = []
         for v in group.values():
-            pval, diff, tstat = self.calc_single(v,sign)
+            pval, diff, tstat, pre = self.calc_single(v,sign)
             res_p.append(pval)
             res_d.append(np.mean(diff))
         res = pd.DataFrame({"p value":res_p,"mean difference":res_d},index=list(group.keys()))
@@ -220,7 +220,7 @@ class Calc():
                 pval.append(p)
                 tstat.append(t)
                 diff.append(np.mean(temp) - mean_whole)
-            return np.array(pval), np.array(diff), np.array(tstat)
+            return np.array(pval), np.array(diff), np.array(tstat), present
 
 
     def _integrate(self,pval:np.array([]),diff:np.array([]),sign:bool=True):

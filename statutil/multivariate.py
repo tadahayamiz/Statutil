@@ -108,7 +108,7 @@ def ting():
     dat.set_data(df, args.treatment, args.control)
     int_p, each = dat.calc(group, args.sign, args.correction)
     res = pd.DataFrame({
-        "integrated p value":[p],
+        "integrated p value":[int_p],
         "mean difference":each["difference"].mean(),
         "analyzed member":["///".join([v for v in group if v in df.index])],
         "K":[len(tre)], # num of treatment conditions
