@@ -85,7 +85,7 @@ def ting():
         group = [row[0].lower() for row in reader]
     # read data
     df = pd.read_csv(args.data, sep=args.extension, index_col=0)
-    df.columns = [v.lower() for v in df.columns]
+    df.index = [v.lower() for v in df.index]
     # check whether group members exist in the indices
     check = [v for v in group if v not in df.index]
     if len(check)!=0:
