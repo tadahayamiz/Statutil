@@ -86,7 +86,7 @@ class Calc():
         self.result = None
 
 
-    def calc(self,group:list=[],sign:bool=True,method:str="fdr_bh"):
+    def calc(self, group:list=[], sign:bool=True, method:str="fdr_bh"):
         """
         calculate the importance of the given group features or groups between the two conditions
         
@@ -107,7 +107,7 @@ class Calc():
         assert len(group) > 2
         if len(self.idx)==0:
             raise ValueError("!! Set a dataframe !!")
-        if len(self.diff)==0:
+        if self.diff is None:
             self._calc_diff()
         if type(group)==list:
             return self.calc_single(group, sign)
