@@ -110,7 +110,7 @@ def ting():
     tmp_diff = each["diff"].mean()
     tmp_stat = each["t_stat"].values.flatten()
     if args.sign:
-        tmp_stat = tmp_stat * np.sign(each["diff"].flatten())
+        tmp_stat = tmp_stat * np.sign(each["diff"].values.flatten())
     res = pd.DataFrame({
         "integrated p value":[int_p],
         "mean difference":tmp_diff,
