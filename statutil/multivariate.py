@@ -109,7 +109,7 @@ def ting():
     res = pd.DataFrame({
         "integrated p value":[p],
         "mean difference":np.mean(diff),
-        "analyzed member":[v for v in group if v in df.index],
+        "analyzed member":["///".join([v for v in group if v in df.index])],
         "K":[len(tre)], # num of treatment conditions
         "L":[len(con)], # num of control conditions
         })
@@ -121,13 +121,13 @@ def ting():
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     configs = pd.DataFrame({
-        "control":args.control,
-        "treatment":args.treatment,
-        "group":group,
+        "control":[args.control],
+        "treatment":[args.treatment],
+        "group":["///".join(group)],
         "sign":args.sign,
-        "pandas":pd.__version__,
-        "numpy":np.__version__,
-        "scipy":scipy.__version__,
+        "pandas":[pd.__version__],
+        "numpy":[np.__version__],
+        "scipy":[scipy.__version__],
         })
     res.to_csv(outdir + SEP + "result.txt", sep=args.extension)
     configs.to_csv(outdir + SEP + "config.txt", sep=args.extension)
