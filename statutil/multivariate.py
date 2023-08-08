@@ -107,9 +107,14 @@ def ting():
     dat = Calc()
     dat.set_data(df, args.treatment, args.control)
     int_p, each = dat.calc(group, args.sign, args.correction)
+    tmp_diff = each["diff"].mean()
+    tmp_stat = each["t_stat"].flatten()
+    if args.sign:
+        tmp_stat = tmp_stat * np.sign(each["diff"].flatten())
     res = pd.DataFrame({
         "integrated p value":[int_p],
-        "mean difference":each["difference"].mean(),
+        "mean difference":tmp_diff,
+        "mean t statistics":tmp_stat,
         "analyzed member":["///".join([v for v in group if v in df.index])],
         "K":[len(tre)], # num of treatment conditions
         "L":[len(con)], # num of control conditions
@@ -122,8 +127,8 @@ def ting():
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     configs = pd.DataFrame({
-        "control":[args.control],
-        "treatment":[args.treatment],
+        "key_control":[args.control],
+        "key_treatment":[args.treatment],
         "group":["///".join(group)],
         "sign":args.sign,
         "pandas":[pd.__version__],

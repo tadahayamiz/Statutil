@@ -134,6 +134,8 @@ class Calc():
         value = self._integrate(pval, diff, sign)
         tre = np.tile(self.__tre_col, (self.L, 1)).T.flatten()
         con = np.tile(self.__con_col, self.K)
+        tre = [self.col[i] for i in tre]
+        con = [self.col[i] for i in con]
         each = pd.DataFrame({
             "p_val":pval.flatten(), # K x L -> val[0], val[1], ..., val[k]
             "diff":diff.flatten(),
