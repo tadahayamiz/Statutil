@@ -106,10 +106,11 @@ def ting():
     dat.set_data(df, args.treatment, args.control)
     p, diff = dat.calc(group, args.sign, args.correction)
     res = pd.DataFrame({
-        "integrated p value":p,
+        "integrated p value":[p],
         "mean difference":np.mean(diff),
-        "K":len(tre), # num of treatment conditions
-        "L":len(con), # num of control conditions
+        "analyzed member":[v for v in group if v in df.index],
+        "K":[len(tre)], # num of treatment conditions
+        "L":[len(con)], # num of control conditions
         })
     # export
     if len(args.outdir) > 0:
