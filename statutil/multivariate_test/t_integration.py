@@ -322,7 +322,7 @@ class Calc():
             indicate the members of a focusing group
             
         """
-        pval,diff = self._calc_indivisual_p(group)
+        pval, diff, tstat, pre = self._calc_indivisual_p(group)
         integrated = self._integrate(pval,diff,sign)
         K = len(pval)
         p = self._calc_integrated_p(integrated,K)
