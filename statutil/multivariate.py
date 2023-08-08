@@ -13,6 +13,7 @@ import os
 import argparse
 import numpy as np
 import pandas as pd
+import scipy
 import csv
 
 from tqdm.auto import trange, tqdm
@@ -124,6 +125,9 @@ def ting():
         "treatment":args.treatment,
         "group":group,
         "sign":args.sign,
+        "pandas":pd.__version__,
+        "numpy":np.__version__,
+        "scipy":scipy.__version__,
         })
     res.to_csv(outdir + SEP + "result.txt", sep=args.extension)
     configs.to_csv(outdir + SEP + "config.txt", sep=args.extension)
