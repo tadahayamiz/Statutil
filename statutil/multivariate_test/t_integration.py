@@ -85,7 +85,7 @@ class Calc():
         if is_normalized:
             pass
         else:
-            self.data = (self.data - np.mean(self.data, axis=1)) / np.c_[np.std(self.data, ddof=0, axis=1)]
+            self.data = (self.data - np.mean(self.data, axis=1).reshape(-1, 1)) / np.std(self.data, ddof=0, axis=1).reshape(-1, 1)
             check = np.where(np.abs(self.data)==np.inf, np.nan, self.data)
             check = ~np.isnan(check).any(axis=1)
             self.data = self.data[check]
