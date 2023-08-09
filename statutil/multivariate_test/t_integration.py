@@ -59,7 +59,7 @@ class Calc():
         self.present_member = []
 
 
-    def set_data(self,data,treatment:str="",control:str=""):
+    def set_data(self, data, treatment:str="", control:str="", is_normalized:bool=False):
         """
         set a dataframe in the matrix form (feature x sample)
         
@@ -74,10 +74,22 @@ class Calc():
         control: str
             indicate the keyword for the control columns
 
+        is_normalized: bool
+            whether the given data is normalized or not
+            note the analysis needs normalization
+
         """
         self.col = list(data.columns)
         self.idx = [v.lower() for v in list(data.index)]
         self.data = data.values
+        if is_normalized:
+            pass
+        else:
+            self.data = (self.data - np.mean(self.data, axis=1)) / np.c_[np.std(self.data, ddof=0, axis=1)]
+            check = np.where(np.abs(self.data)==np.inf, np.nan, self.data)
+            check = ~np.isnan(check).any(axis=1)
+            self.data = self.data[check]
+            self.idx = [v for v, w in zip(self.idx, check) if w]
         self.__tre_col = [i for i, v in enumerate(self.col) if treatment in v]
         self.__con_col = [i for i, v in enumerate(self.col) if control in v]
         self.K = len(self.__tre_col)

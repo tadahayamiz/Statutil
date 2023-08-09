@@ -70,6 +70,11 @@ parser.add_argument(
     '-v', '--verbose', default=True,
     help='verbose'
     )
+parser.add_argument(
+    '-n', '--is_normalized', action='store_true',
+    help='whether the given data is already normalized or not'
+    )
+
 
 args = parser.parse_args()
 
@@ -105,7 +110,7 @@ def ting():
         print(f"treatment columns: {tre}")
     # main
     dat = Calc()
-    dat.set_data(df, args.treatment, args.control)
+    dat.set_data(df, args.treatment, args.control, args.is_normalized)
     int_p, each = dat.calc(group, args.sign, args.correction)
     tmp_diff = each["diff"].mean()
     tmp_stat = each["t_stat"].values.flatten()
