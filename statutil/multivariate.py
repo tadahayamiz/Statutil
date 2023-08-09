@@ -111,19 +111,20 @@ def ting():
     # main
     dat = Calc()
     dat.set_data(df, args.treatment, args.control, args.is_normalized)
-    int_p, each = dat.calc(group, args.sign, args.correction)
+    ps, each = dat.calc(group, args.sign, args.correction)
     tmp_diff = each["diff"].mean()
     tmp_stat = each["t_stat"].values.flatten()
     if args.sign:
         tmp_stat = tmp_stat * np.sign(each["diff"].values.flatten())
     res = pd.DataFrame({
-        "integrated p value":[int_p],
+        "integrated p value":[ps[0]],
+        "corrected negative log sum":[ps[1]],
         "mean difference":tmp_diff,
         "mean t statistics":tmp_stat.mean(),
         "analyzed member":["///".join([v for v in group if v in df.index])],
         "K":[len(tre)], # num of treatment conditions
         "L":[len(con)], # num of control conditions
-        })
+        }, index=["value"])
     # export
     if len(args.outdir) > 0:
         outdir = args.outdir
@@ -139,7 +140,7 @@ def ting():
         "pandas":[pd.__version__],
         "numpy":[np.__version__],
         "scipy":[scipy.__version__],
-        })
+        }, index=["value"])
     res.to_csv(outdir + SEP + "result.txt", sep=args.extension)
     each.to_csv(outdir + SEP + "result_individual.txt", sep=args.extension)
     configs.to_csv(outdir + SEP + "config.txt", sep=args.extension)

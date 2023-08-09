@@ -155,7 +155,7 @@ class Calc():
             "treatment":tre,
             "control":con,
         })
-        return self._calc_integrated_p(value), each
+        return (self._calc_integrated_p(value), value), each
 
 
     def calc_multi(self, group:dict, sign:bool=True, method:str="fdr_bh"):
@@ -177,28 +177,31 @@ class Calc():
 
         """
         res_p = []
+        res_s = []
         res_d = []
         res_t = []
         if sign:
             for v in group.values():
-                pval, diff, stat = self.calc_single(v, sign)
-                res_p.append(pval)
-                res_d.append(np.mean(diff))
-                res_t.append(np.mean(stat * np.sign(diff)))
+                ps, each = self.calc_single(v, sign)
+                res_p.append(ps[0]) # p value
+                res_s.append(ps[1]) # corrected negative log sum
+                res_d.append(np.mean(each["diff"].values))
+                res_t.append(np.mean(each["t_stat"].values * np.sign(each["diff"].values)))
         else:
             for v in group.values():
-                pval, diff, stat = self.calc_single(v, sign)
-                res_p.append(pval)
-                res_d.append(np.mean(diff))
-                res_t.append(np.mean(stat))
+                ps, each = self.calc_single(v, sign)
+                res_p.append(ps[0]) # p value
+                res_s.append(ps[1]) # corrected negative log sum
+                res_d.append(np.mean(each["diff"].values))
+                res_t.append(np.mean(each["t_stat"].values))
         res = pd.DataFrame(
-            {"p_val":res_p,"mean_diff":res_d, "mean_t":res_t},index=list(group.keys())
+            {"p_val":res_p, "corrected_negative_log_sum":res_s, "mean_diff":res_d, "mean_t":res_t},index=list(group.keys())
             )
         res_posi = res.dropna()
         res_q = multitest.multipletests(res_posi["p_val"].values,method=method)[1]
         res.loc[res_posi.index, "adjuste_p_val"] = res_q
         res = res.sort_values("p_val")
-        return res[["p_val", "adjusted_p_val", "mean_diff", "mean_stat"]]
+        return res[["p_val", "adjusted_p_val", "corrected_negative_log_sum", "mean_diff", "mean_stat"]]
 
 
     def _calc_diff(self):
