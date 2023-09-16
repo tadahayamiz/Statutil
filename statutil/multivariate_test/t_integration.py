@@ -148,6 +148,10 @@ class Calc():
         con = np.tile(self.__con_col, self.K)
         tre = [self.col[i] for i in tre]
         con = [self.col[i] for i in con]
+
+
+        print(len(pval), len(diff), len(stat), len(tre), len(con))
+
         each = pd.DataFrame({
             "p_val":pval.flatten(), # K x L -> val[0], val[1], ..., val[k]
             "diff":diff.flatten(),
