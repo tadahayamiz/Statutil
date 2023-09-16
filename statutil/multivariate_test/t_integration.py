@@ -143,15 +143,15 @@ class Calc():
         
         """
         pval, diff, stat = self._calc_indivisual_p(group)
+        if len(pval) == 0:
+            raise ValueError(
+                "!! p value was not calculated. check the correspondence between the group member and the given index !!"
+                )
         value = self._integrate(pval, diff, sign)
         tre = np.tile(self.__tre_col, (self.L, 1)).T.flatten()
         con = np.tile(self.__con_col, self.K)
         tre = [self.col[i] for i in tre]
         con = [self.col[i] for i in con]
-
-
-        print(len(pval), len(diff), len(stat), len(tre), len(con))
-
         each = pd.DataFrame({
             "p_val":pval.flatten(), # K x L -> val[0], val[1], ..., val[k]
             "diff":diff.flatten(),
@@ -203,9 +203,10 @@ class Calc():
             )
         res_posi = res.dropna()
         res_q = multitest.multipletests(res_posi["p_val"].values,method=method)[1]
+        res.loc[:, "adjusted_p_val"] = [np.nan] * res.shape[0]
         res.loc[res_posi.index, "adjuste_p_val"] = res_q
         res = res.sort_values("p_val")
-        return res[["p_val", "adjusted_p_val", "corrected_negative_log_sum", "mean_diff", "mean_stat"]]
+        return res[["p_val", "adjusted_p_val", "corrected_negative_log_sum", "mean_diff", "mean_t"]]
 
 
     def _calc_diff(self):
